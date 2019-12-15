@@ -4,6 +4,7 @@ using Files.Filesystem;
 using Windows.UI.Xaml.Input;
 using Windows.System;
 using Interaction = Files.Interacts.Interaction;
+using System.Linq;
 
 namespace Files
 {
@@ -51,6 +52,8 @@ namespace Files
 
         private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            base.SelectedStorageItems = FileList.SelectedItems?.Cast<ListedItem>().ToList();
+
             if (e.AddedItems.Count > 0)
             {
                 App.OccupiedInstance.HomeItems.isEnabled = true;

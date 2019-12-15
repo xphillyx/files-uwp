@@ -86,7 +86,7 @@ namespace Files.Controls
 
         public async void CheckPathInput(ItemViewModel instance, string CurrentInput)
         {
-            if (CurrentInput != instance.Universal.path || parentPage.ItemDisplayFrame.CurrentSourcePageType == typeof(YourHome))
+            if (CurrentInput != instance.Universal.Path || parentPage.ItemDisplayFrame.CurrentSourcePageType == typeof(YourHome))
             {
                 parentPage.HomeItems.isEnabled = false;
                 parentPage.ShareItems.isEnabled = false;
@@ -162,7 +162,7 @@ namespace Files.Controls
                                     await Interaction.LaunchExe(CurrentInput);
                                 }
 
-                                VisiblePath.Text = instance.Universal.path;
+                                VisiblePath.Text = instance.Universal.Path;
                             }
                             else
                             {
@@ -206,7 +206,7 @@ namespace Files.Controls
 
                                 };
                                 await Launcher.LaunchFileAsync(file, options);
-                                VisiblePath.Text = instance.Universal.path;
+                                VisiblePath.Text = instance.Universal.Path;
                             }
                             catch (ArgumentException)
                             {

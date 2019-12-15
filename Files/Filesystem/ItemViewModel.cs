@@ -36,7 +36,6 @@ namespace Files.Filesystem
         public LoadingIndicator LoadIndicator { get; set; } = new LoadingIndicator();
         public ReadOnlyObservableCollection<ListedItem> FilesAndFolders { get; }
         public CollectionViewSource viewSource;
-        public UniversalPath Universal { get; } = new UniversalPath();
         private ObservableCollection<ListedItem> _filesAndFolders;
         private StorageFolderQueryResult _folderQueryResult;
         public StorageFileQueryResult _fileQueryResult;
@@ -47,140 +46,19 @@ namespace Files.Filesystem
         private const int _step = 250;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private SortOption _directorySortOption = SortOption.Name;
-        private SortDirection _directorySortDirection = SortDirection.Ascending;
 
-        public SortOption DirectorySortOption
-        {
-            get
-            {
-                return _directorySortOption;
-            }
-            set
-            {
-                if (value != _directorySortOption)
-                {
-                    _directorySortOption = value;
-                    NotifyPropertyChanged("DirectorySortOption");
-                    NotifyPropertyChanged("IsSortedByName");
-                    NotifyPropertyChanged("IsSortedByDate");
-                    NotifyPropertyChanged("IsSortedByType");
-                    NotifyPropertyChanged("IsSortedBySize");
-                    OrderFiles();
-                }
-            }
-        }
-
-        public SortDirection DirectorySortDirection
-        {
-            get
-            {
-                return _directorySortDirection;
-            }
-            set
-            {
-                if (value != _directorySortDirection)
-                {
-                    _directorySortDirection = value;
-                    NotifyPropertyChanged("DirectorySortDirection");
-                    NotifyPropertyChanged("IsSortedAscending");
-                    NotifyPropertyChanged("IsSortedDescending");
-                    OrderFiles();
-                }
-            }
-        }
-
-        public bool IsSortedByName
-        {
-            get => DirectorySortOption == SortOption.Name;
-            set
-            {
-                if (value)
-                {
-                    DirectorySortOption = SortOption.Name;
-                    NotifyPropertyChanged("IsSortedByName");
-                    NotifyPropertyChanged("DirectorySortOption");
-                }
-            }
-        }
-
-        public bool IsSortedByDate
-        {
-            get => DirectorySortOption == SortOption.DateModified;
-            set
-            {
-                if (value)
-                {
-                    DirectorySortOption = SortOption.DateModified;
-                    NotifyPropertyChanged("IsSortedByDate");
-                    NotifyPropertyChanged("DirectorySortOption");
-                }
-            }
-        }
-
-        public bool IsSortedByType
-        {
-            get => DirectorySortOption == SortOption.FileType;
-            set
-            {
-                if (value)
-                {
-                    DirectorySortOption = SortOption.FileType;
-                    NotifyPropertyChanged("IsSortedByType");
-                    NotifyPropertyChanged("DirectorySortOption");
-                }
-            }
-        }
-
-        public bool IsSortedBySize
-        {
-            get => DirectorySortOption == SortOption.Size;
-            set
-            {
-                if (value)
-                {
-                    DirectorySortOption = SortOption.Size;
-                    NotifyPropertyChanged("IsSortedBySize");
-                    NotifyPropertyChanged("DirectorySortOption");
-                }
-            }
-        }
-
-        public bool IsSortedAscending
-        {
-            get => DirectorySortDirection == SortDirection.Ascending;
-            set
-            {
-                DirectorySortDirection = value ? SortDirection.Ascending : SortDirection.Descending;
-                NotifyPropertyChanged("IsSortedAscending");
-                NotifyPropertyChanged("IsSortedDescending");
-                NotifyPropertyChanged("DirectorySortDirection");
-            }
-        }
-
-        public bool IsSortedDescending
-        {
-            get => !IsSortedAscending;
-            set
-            {
-                DirectorySortDirection = value ? SortDirection.Descending : SortDirection.Ascending;
-                NotifyPropertyChanged("IsSortedAscending");
-                NotifyPropertyChanged("IsSortedDescending");
-                NotifyPropertyChanged("DirectorySortDirection");
-            }
-        }
 
         public ItemViewModel()
         {
             _filesAndFolders = new ObservableCollection<ListedItem>();
             FilesAndFolders = new ReadOnlyObservableCollection<ListedItem>(_filesAndFolders);
-            App.OccupiedInstance.HomeItems.PropertyChanged += HomeItems_PropertyChanged;
-            App.OccupiedInstance.ShareItems.PropertyChanged += ShareItems_PropertyChanged;
-            App.OccupiedInstance.LayoutItems.PropertyChanged += LayoutItems_PropertyChanged;
-            App.OccupiedInstance.AlwaysPresentCommands.PropertyChanged += AlwaysPresentCommands_PropertyChanged;
+            App.occupiedInstance.HomeItems.PropertyChanged += HomeItems_PropertyChanged;
+            App.occupiedInstance.ShareItems.PropertyChanged += ShareItems_PropertyChanged;
+            App.occupiedInstance.LayoutItems.PropertyChanged += LayoutItems_PropertyChanged;
+            App.occupiedInstance.AlwaysPresentCommands.PropertyChanged += AlwaysPresentCommands_PropertyChanged;
             _cancellationTokenSource = new CancellationTokenSource();
 
-            Universal.PropertyChanged += Universal_PropertyChanged;
+            App.occupiedInstance.WorkingDirectory.PropertyChanged += Universal_PropertyChanged;
         }
 
         /*
@@ -192,7 +70,7 @@ namespace Files.Filesystem
         private void Universal_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             // Clear the path UI
-            App.OccupiedInstance.pathBoxItems.Clear();
+            App.occupiedInstance.PathBoxItems.Clear();
             // Style tabStyleFixed = App.selectedTabInstance.accessiblePathTabView.Resources["PathSectionTabStyle"] as Style;
             FontWeight weight = new FontWeight()
             {
@@ -204,7 +82,7 @@ namespace Files.Filesystem
                 // If path is a library, simplify it
 
                 // If path is found to not be a library
-                pathComponents =  Universal.path.Split("\\", StringSplitOptions.RemoveEmptyEntries).ToList();
+                pathComponents =  App.occupiedInstance.WorkingDirectory.Path.Split("\\", StringSplitOptions.RemoveEmptyEntries).ToList();
                 int index = 0;
                 foreach(string s in pathComponents)
                 {
@@ -227,7 +105,7 @@ namespace Files.Filesystem
                             Title = componentLabel,
                             Path = tag,
                         };
-                        App.OccupiedInstance.pathBoxItems.Add(item);
+                        App.occupiedInstance.PathBoxItems.Add(item);
                     }
                     else
                     {
@@ -245,7 +123,7 @@ namespace Files.Filesystem
                             Title = componentLabel,
                             Path = tag,
                         };
-                        App.OccupiedInstance.pathBoxItems.Add(item);
+                        App.occupiedInstance.PathBoxItems.Add(item);
 
                     }
                     index++;
@@ -255,49 +133,49 @@ namespace Files.Filesystem
 
         private void AlwaysPresentCommands_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if(App.OccupiedInstance.AlwaysPresentCommands.isEnabled == true)
+            if(App.occupiedInstance.AlwaysPresentCommands.isEnabled == true)
             {
-                App.OccupiedInstance.AlwaysPresentCommands.isEnabled = true;
+                App.occupiedInstance.AlwaysPresentCommands.isEnabled = true;
             }
             else
             {
-                App.OccupiedInstance.AlwaysPresentCommands.isEnabled = false;
+                App.occupiedInstance.AlwaysPresentCommands.isEnabled = false;
             }
         }
 
         private void LayoutItems_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (App.OccupiedInstance.LayoutItems.isEnabled == true)
+            if (App.occupiedInstance.LayoutItems.isEnabled == true)
             {
-                App.OccupiedInstance.LayoutItems.isEnabled = true;
+                App.occupiedInstance.LayoutItems.isEnabled = true;
             }
             else
             {
-                App.OccupiedInstance.LayoutItems.isEnabled = false;
+                App.occupiedInstance.LayoutItems.isEnabled = false;
             }
         }
 
         private void ShareItems_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (App.OccupiedInstance.ShareItems.isEnabled == true)
+            if (App.occupiedInstance.ShareItems.isEnabled == true)
             {
-                App.OccupiedInstance.ShareItems.isEnabled = true;
+                App.occupiedInstance.ShareItems.isEnabled = true;
             }
             else
             {
-                App.OccupiedInstance.ShareItems.isEnabled = false;
+                App.occupiedInstance.ShareItems.isEnabled = false;
             }
         }
 
         private void HomeItems_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (App.OccupiedInstance.HomeItems.isEnabled == true)
+            if (App.occupiedInstance.HomeItems.isEnabled == true)
             {
-                App.OccupiedInstance.HomeItems.isEnabled = true;
+                App.occupiedInstance.HomeItems.isEnabled = true;
             }
             else
             {
-                App.OccupiedInstance.HomeItems.isEnabled = false;
+                App.occupiedInstance.HomeItems.isEnabled = false;
             }
 
         }
@@ -328,9 +206,9 @@ namespace Files.Filesystem
             {
                 _fileQueryResult.ContentsChanged -= FileContentsChanged;
             }
-            App.OccupiedInstance.RibbonArea.Back.IsEnabled = true;
-            App.OccupiedInstance.RibbonArea.Forward.IsEnabled = true;
-            App.OccupiedInstance.RibbonArea.Up.IsEnabled = true;
+            App.occupiedInstance.BackButtonState = true;
+            App.occupiedInstance.ForwardButtonState = true;
+            App.occupiedInstance.UpButtonState = true;
 
         }
 
@@ -341,7 +219,7 @@ namespace Files.Filesystem
 
             object orderByNameFunc(ListedItem item) => item.FileName;
             Func<ListedItem, object> orderFunc = orderByNameFunc;
-            switch (DirectorySortOption)
+            switch (App.occupiedInstance.DirectorySortOption)
             {
                 case SortOption.Name:
                     orderFunc = orderByNameFunc;
@@ -363,20 +241,20 @@ namespace Files.Filesystem
             IOrderedEnumerable<ListedItem> ordered;
             List<ListedItem> orderedList;
 
-            if (DirectorySortDirection == SortDirection.Ascending)
+            if (App.occupiedInstance.DirectorySortDirection == SortDirection.Ascending)
                 ordered = _filesAndFolders.OrderBy(folderThenFile).ThenBy(orderFunc);
             else
             {
-                if (DirectorySortOption == SortOption.FileType)
+                if (App.occupiedInstance.DirectorySortOption == SortOption.FileType)
                     ordered = _filesAndFolders.OrderBy(folderThenFile).ThenByDescending(orderFunc);
                 else
                     ordered = _filesAndFolders.OrderByDescending(folderThenFile).ThenByDescending(orderFunc);
             }
 
             // Further order by name if applicable
-            if (DirectorySortOption != SortOption.Name)
+            if (App.occupiedInstance.DirectorySortOption != SortOption.Name)
             {
-                if (DirectorySortDirection == SortDirection.Ascending)
+                if (App.occupiedInstance.DirectorySortDirection == SortDirection.Ascending)
                     ordered = ordered.ThenBy(orderByNameFunc);
                 else
                     ordered = ordered.ThenByDescending(orderByNameFunc);
@@ -387,25 +265,10 @@ namespace Files.Filesystem
                 _filesAndFolders.Add(i);
         }
 
-        public static T GetCurrentSelectedTabInstance<T>()
-        {
-            Frame rootFrame = Window.Current.Content as Frame;
-            var instanceTabsView = rootFrame.Content as InstanceTabsView;
-            var selectedTabContent = ((InstanceTabsView.tabView.SelectedItem as TabViewItem).Content as Grid);
-            foreach (UIElement uiElement in selectedTabContent.Children)
-            {
-                if (uiElement.GetType() == typeof(Frame))
-                {
-                    return (T) ((uiElement as Frame).Content);
-                }
-            }
-            return default;
-        }
-
         bool isLoadingItems = false;
         public async void AddItemsToCollectionAsync(string path)
         {
-            App.OccupiedInstance.RibbonArea.Refresh.IsEnabled = false;
+            App.occupiedInstance.RefreshButtonState = false;
 
             Frame rootFrame = Window.Current.Content as Frame;
             var instanceTabsView = rootFrame.Content as InstanceTabsView;
@@ -414,43 +277,43 @@ namespace Files.Filesystem
 
             isLoadingItems = true;
             EmptyTextState.isVisible = Visibility.Collapsed;
-            Universal.path = path;
+            App.occupiedInstance.WorkingDirectory.Path = path;
             _filesAndFolders.Clear();
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
             LoadIndicator.isVisible = Visibility.Visible;
 
-            switch (Universal.path)
+            switch (App.occupiedInstance.WorkingDirectory.Path)
             {
                 case "Desktop":
-                    Universal.path = App.DesktopPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.DesktopPath;
                     break;
                 case "Downloads":
-                    Universal.path = App.DownloadsPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.DownloadsPath;
                     break;
                 case "Documents":
-                    Universal.path = App.DocumentsPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.DocumentsPath;
                     break;
                 case "Pictures":
-                    Universal.path = App.PicturesPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.PicturesPath;
                     break;
                 case "Music":
-                    Universal.path = App.MusicPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.MusicPath;
                     break;
                 case "Videos":
-                    Universal.path = App.VideosPath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.VideosPath;
                     break;
                 case "OneDrive":
-                    Universal.path = App.OneDrivePath;
+                    App.occupiedInstance.WorkingDirectory.Path = App.OneDrivePath;
                     break;
             }
 
             try
             {
-                _rootFolder = await StorageFolder.GetFolderFromPathAsync(Universal.path);
+                _rootFolder = await StorageFolder.GetFolderFromPathAsync(App.occupiedInstance.WorkingDirectory.Path);
 
-                App.OccupiedInstance.RibbonArea.Back.IsEnabled = App.OccupiedInstance.ItemDisplayFrame.CanGoBack;
-                App.OccupiedInstance.RibbonArea.Forward.IsEnabled = App.OccupiedInstance.ItemDisplayFrame.CanGoForward;
+                App.occupiedInstance.BackButtonState = App.occupiedInstance.CanNavigateBack;
+                App.occupiedInstance.ForwardButtonState = App.occupiedInstance.CanNavigateForward;
 
                 switch (await _rootFolder.GetIndexedStateAsync())
                 {
@@ -458,12 +321,12 @@ namespace Files.Filesystem
                         _options = new QueryOptions();
                         _options.FolderDepth = FolderDepth.Shallow;
 
-                        if (App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(GenericFileBrowser))
+                        if (App.occupiedInstance.LayoutType == typeof(GenericFileBrowser))
                         {
                             _options.SetThumbnailPrefetch(ThumbnailMode.ListView, 20, ThumbnailOptions.ResizeThumbnail);
                             _options.SetPropertyPrefetch(PropertyPrefetchOptions.BasicProperties, new string[] { "System.DateModified", "System.ContentType", "System.Size", "System.FileExtension" });
                         }
-                        else if (App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(PhotoAlbum))
+                        else if (App.occupiedInstance.LayoutType == typeof(PhotoAlbum))
                         {
                             _options.SetThumbnailPrefetch(ThumbnailMode.ListView, 80, ThumbnailOptions.ResizeThumbnail);
                             _options.SetPropertyPrefetch(PropertyPrefetchOptions.BasicProperties, new string[] { "System.FileExtension" });
@@ -474,12 +337,12 @@ namespace Files.Filesystem
                         _options = new QueryOptions();
                         _options.FolderDepth = FolderDepth.Shallow;
 
-                        if (App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(GenericFileBrowser))
+                        if (App.occupiedInstance.LayoutType == typeof(GenericFileBrowser))
                         {
                             _options.SetThumbnailPrefetch(ThumbnailMode.ListView, 20, ThumbnailOptions.ResizeThumbnail);
                             _options.SetPropertyPrefetch(PropertyPrefetchOptions.BasicProperties, new string[] { "System.DateModified", "System.ContentType", "System.ItemPathDisplay", "System.Size", "System.FileExtension" });
                         }
-                        else if (App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(PhotoAlbum))
+                        else if (App.occupiedInstance.LayoutType == typeof(PhotoAlbum))
                         {
                             _options.SetThumbnailPrefetch(ThumbnailMode.ListView, 80, ThumbnailOptions.ResizeThumbnail);
                             _options.SetPropertyPrefetch(PropertyPrefetchOptions.BasicProperties, new string[] { "System.FileExtension" });
@@ -545,8 +408,8 @@ namespace Files.Filesystem
 
                 OrderFiles();
                 stopwatch.Stop();
-                Debug.WriteLine("Loading of items in " + Universal.path + " completed in " + stopwatch.ElapsedMilliseconds + " milliseconds.\n");
-                App.OccupiedInstance.RibbonArea.Refresh.IsEnabled = true;
+                Debug.WriteLine("Loading of items in " + App.occupiedInstance.WorkingDirectory.Path + " completed in " + stopwatch.ElapsedMilliseconds + " milliseconds.\n");
+                App.occupiedInstance.RefreshButtonState = true;
             }
             catch (UnauthorizedAccessException)
             {
@@ -587,7 +450,7 @@ namespace Files.Filesystem
         {
             var basicProperties = await folder.GetBasicPropertiesAsync();
 
-            if ((App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(GenericFileBrowser)) || (App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(PhotoAlbum)))
+            if ((App.occupiedInstance.LayoutType == typeof(GenericFileBrowser)) || (App.occupiedInstance.LayoutType == typeof(PhotoAlbum)))
             {
                 if (_cancellationTokenSource.IsCancellationRequested)
                 {
@@ -629,7 +492,7 @@ namespace Files.Filesystem
             Visibility itemThumbnailImgVis;
             Visibility itemEmptyImgVis;
 
-            if (!(App.OccupiedInstance.ItemDisplayFrame.SourcePageType == typeof(PhotoAlbum)))
+            if (!(App.occupiedInstance.LayoutType == typeof(PhotoAlbum)))
             {
                 try
                 {
@@ -780,9 +643,6 @@ namespace Files.Filesystem
             _filesRefreshing = false;
             Debug.WriteLine("Filesystem refresh complete");
         }
-        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+
     }
 }

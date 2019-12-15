@@ -5,10 +5,8 @@ namespace Files.Navigation
 {
     public class UniversalPath : INotifyPropertyChanged
     {
-
-
         public string _path;
-        public string path
+        public string Path
         {
             get
             {
@@ -20,7 +18,7 @@ namespace Files.Navigation
                 if (value != _path)
                 {
                     _path = value;
-                    NotifyPropertyChanged("path");
+                    NotifyPropertyChanged("Path");
                 }
             }
         }

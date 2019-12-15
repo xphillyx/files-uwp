@@ -23,7 +23,6 @@ namespace Files
     /// </summary>
     public sealed partial class InstanceTabsView : Page
     {
-        public static TabView tabView;
         public string navArgs;
         public InstanceTabsView()
         {
@@ -31,7 +30,7 @@ namespace Files
             ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.Auto;
             var CoreTitleBar = CoreApplication.GetCurrentView().TitleBar;
             CoreTitleBar.ExtendViewIntoTitleBar = true;
-            tabView = TabStrip;
+            TabStrip = TabStrip;
             var titleBar = ApplicationView.GetForCurrentView().TitleBar;
             titleBar.ButtonInactiveBackgroundColor = Color.FromArgb(0, 255, 255, 255);
             titleBar.ButtonHoverBackgroundColor = Color.FromArgb(75, 10, 10, 10);
@@ -73,13 +72,11 @@ namespace Files
             {
                 WindowProperties.TabListPadding = new Thickness(8, 0, 0, 0);
                 WindowProperties.TabAddButtonMargin = new Thickness(0, 0, 0, 0);
-                
             }
             else
             {
                 WindowProperties.TabListPadding = new Thickness(8, 8, 0, 0);
                 WindowProperties.TabAddButtonMargin = new Thickness(0, 8, 0, 0);
-
             }
         }
 
@@ -96,12 +93,6 @@ namespace Files
                 AddNewTab(typeof(ProHome), navArgs);
             }
 
-            Microsoft.UI.Xaml.Controls.FontIconSource icon = new Microsoft.UI.Xaml.Controls.FontIconSource();
-            icon.Glyph = "\xE713";
-            if ((tabView.SelectedItem as TabViewItem).Header.ToString() != "Settings" && (tabView.SelectedItem as TabViewItem).IconSource != icon)
-            {
-                App.OccupiedInstance = ItemViewModel.GetCurrentSelectedTabInstance<ProHome>();
-            }
         }
 
         public void AddNewTab(Type t, string path)
@@ -117,11 +108,11 @@ namespace Files
                 {
                     tabLocationHeader = "Settings";
                     fontIconSource.Glyph = "\xE713";
-                    foreach (TabViewItem item in tabView.TabItems)
+                    foreach (TabViewItem item in TabStrip.TabItems)
                     {
                         if (item.Header.ToString() == "Settings")
                         {
-                            tabView.SelectedItem = item;
+                            TabStrip.SelectedItem = item;
                             return;
                         }
                     }
@@ -191,11 +182,11 @@ namespace Files
                 Width = 200,
                 IconSource = tabIcon
             };
-            tabView.TabItems.Add(tvi);
+            TabStrip.TabItems.Add(tvi);
             TabStrip.SelectedItem = TabStrip.TabItems[TabStrip.TabItems.Count - 1];
-            if(tabView.SelectedItem == tvi)
+            if(TabStrip.SelectedItem == tvi)
             {
-                (((tabView.SelectedItem as TabViewItem).Content as Grid).Children[0] as Frame).Navigate(t, path);
+                (((TabStrip.SelectedItem as TabViewItem).Content as Grid).Children[0] as Frame).Navigate(t, path);
             }
         }
 
@@ -289,8 +280,8 @@ namespace Files
 
             }
             tabIcon = fontIconSource;
-            (tabView.SelectedItem as TabViewItem).Header = tabLocationHeader;
-            (tabView.SelectedItem as TabViewItem).IconSource = tabIcon;
+            (TabStrip.SelectedItem as TabViewItem).Header = tabLocationHeader;
+            (TabStrip.SelectedItem as TabViewItem).IconSource = tabIcon;
         }
 
         public static string NormalizePath(string path)
@@ -340,9 +331,12 @@ namespace Files
             {
                 Microsoft.UI.Xaml.Controls.FontIconSource icon = new Microsoft.UI.Xaml.Controls.FontIconSource();
                 icon.Glyph = "\xE713";
-                if ((tabView.SelectedItem as TabViewItem).Header.ToString() != "Settings" && (tabView.SelectedItem as TabViewItem).IconSource != icon)
+                if ((TabStrip.SelectedItem as TabViewItem).Header.ToString() != "Settings" && (TabStrip.SelectedItem as TabViewItem).IconSource != icon)
                 {
-                    App.OccupiedInstance = ItemViewModel.GetCurrentSelectedTabInstance<ProHome>();
+                    App.occupiedInstance = new OccupiedInstance() { 
+                        LayoutType = ((TabStrip.SelectedItem as TabViewItem).Content as ProHome).ItemDisplayFrame.SourcePageType 
+
+                    };
                 }
             }
 

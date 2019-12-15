@@ -33,6 +33,7 @@ namespace Files
 {
     sealed partial class App : Application
     {
+        public static OccupiedInstance occupiedInstance { get; set; }
         public static bool areLinuxFilesSupported { get; set; } = false;
         public static string DesktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         public static string DocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -41,21 +42,6 @@ namespace Files
         public static string PicturesPath = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         public static string MusicPath = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
         public static string VideosPath = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        private static ProHome occupiedInstance;
-        public static ProHome OccupiedInstance
-        {
-            get
-            {
-                return occupiedInstance;
-            }
-            set
-            {
-                if(value != occupiedInstance)
-                {
-                    occupiedInstance = value; 
-                }
-            }
-        }
         public static Dialogs.ExceptionDialog exceptionDialog { get; set; }
         public static Dialogs.ConsentDialog consentDialog { get; set; }
         public static Dialogs.PropertiesDialog propertiesDialog { get; set; }
@@ -547,7 +533,8 @@ namespace Files
             try
             {
                 DataPackageView packageView = Clipboard.GetContent();
-                if (packageView.Contains(StandardDataFormats.StorageItems) && App.OccupiedInstance.ItemDisplayFrame.SourcePageType != typeof(YourHome))
+                
+                if (packageView.Contains(StandardDataFormats.StorageItems) && occupiedInstance.LayoutType != typeof(YourHome))
                 {
                     App.PS.isEnabled = true;
                 }

@@ -23,31 +23,9 @@ namespace Files
     /// </summary>
     public class BaseLayout : Page
     {
-        public ItemViewModel AssociatedViewModel = null;
-        public Interaction AssociatedInteractions = null;
-        public List<ListedItem> selectedItems 
-        { 
-            get
-            {
-                if (App.OccupiedInstance.ItemDisplayFrame.CurrentSourcePageType == typeof(GenericFileBrowser))
-                {
-                    return (App.OccupiedInstance.ItemDisplayFrame.Content as GenericFileBrowser).AllView.SelectedItems.Cast<ListedItem>().ToList();
-                }
-                else if (App.OccupiedInstance.ItemDisplayFrame.CurrentSourcePageType == typeof(PhotoAlbum))
-                {
-                    return (App.OccupiedInstance.ItemDisplayFrame.Content as PhotoAlbum).FileList.SelectedItems.Cast<ListedItem>().ToList();
-                }
-                else
-                {
-                    return new List<ListedItem>();
-                }
-            } 
-        }
-
         public BaseLayout()
         {
-            this.Loaded += Page_Loaded;
-            Page_Loaded(null, null);
+
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs eventArgs)
@@ -60,60 +38,60 @@ namespace Files
                 InstanceTabsView instanceTabsView = rootFrame.Content as InstanceTabsView;
                 instanceTabsView.TabStrip_SelectionChanged(null, null);
             }
-            App.OccupiedInstance.RibbonArea.Refresh.IsEnabled = true;
-            App.OccupiedInstance.AlwaysPresentCommands.isEnabled = true;
-            AssociatedViewModel.EmptyTextState.isVisible = Visibility.Collapsed;
-            App.OccupiedInstance.instanceViewModel.Universal.path = parameters;
+            App.occupiedInstance.RefreshButtonState = true;
+            App.occupiedInstance.AlwaysPresentCommands.isEnabled = true;
+            App.occupiedInstance.ViewModel.EmptyTextState.isVisible = Visibility.Collapsed;
+            App.occupiedInstance.WorkingDirectory.Path = parameters;
             
-            if (App.OccupiedInstance.instanceViewModel.Universal.path == Path.GetPathRoot(App.OccupiedInstance.instanceViewModel.Universal.path))
+            if (App.occupiedInstance.WorkingDirectory.Path == Path.GetPathRoot(App.occupiedInstance.WorkingDirectory.Path))
             {
-                App.OccupiedInstance.RibbonArea.Up.IsEnabled = false;
+                App.occupiedInstance.UpButtonState = false;
             }
             else
             {
-                App.OccupiedInstance.RibbonArea.Up.IsEnabled = true;
+                App.occupiedInstance.UpButtonState = true;
             }
 
-            App.OccupiedInstance.instanceViewModel.AddItemsToCollectionAsync(App.OccupiedInstance.instanceViewModel.Universal.path);
+            App.occupiedInstance.ViewModel.AddItemsToCollectionAsync(App.occupiedInstance.WorkingDirectory.Path);
             App.Clipboard_ContentChanged(null, null);
 
             if (parameters.Equals(App.DesktopPath))
             {
-                App.OccupiedInstance.PathText.Text = "Desktop";
+                App.occupiedInstance.PathText.Text = "Desktop";
             }
             else if (parameters.Equals(App.DocumentsPath))
             {
-                App.OccupiedInstance.PathText.Text = "Documents";
+                App.occupiedInstance.PathText.Text = "Documents";
             }
             else if (parameters.Equals(App.DownloadsPath))
             {
-                App.OccupiedInstance.PathText.Text = "Downloads";
+                App.occupiedInstance.PathText.Text = "Downloads";
             }
             else if (parameters.Equals(App.PicturesPath))
             {
-                App.OccupiedInstance.PathText.Text = "Pictures";
+                App.occupiedInstance.PathText.Text = "Pictures";
             }
             else if (parameters.Equals(App.MusicPath))
             {
-                App.OccupiedInstance.PathText.Text = "Music";
+                App.occupiedInstance.PathText.Text = "Music";
             }
             else if (parameters.Equals(App.OneDrivePath))
             {
-                App.OccupiedInstance.PathText.Text = "OneDrive";
+                App.occupiedInstance.PathText.Text = "OneDrive";
             }
             else if (parameters.Equals(App.VideosPath))
             {
-                App.OccupiedInstance.PathText.Text = "Videos";
+                App.occupiedInstance.PathText.Text = "Videos";
             }
             else
             {
                 if (parameters.Equals(@"C:\") || parameters.Equals(@"c:\"))
                 {
-                    App.OccupiedInstance.PathText.Text = @"Local Disk (C:\)";
+                    App.occupiedInstance.PathText.Text = @"Local Disk (C:\)";
                 }
                 else
                 {
-                    App.OccupiedInstance.PathText.Text = parameters;
+                    App.occupiedInstance.PathText.Text = parameters;
                 }
             }
         }
@@ -121,9 +99,9 @@ namespace Files
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             base.OnNavigatingFrom(e);
-            if (App.OccupiedInstance.instanceViewModel._fileQueryResult != null)
+            if (App.occupiedInstance.ViewModel._fileQueryResult != null)
             {
-                App.OccupiedInstance.instanceViewModel._fileQueryResult.ContentsChanged -= App.OccupiedInstance.instanceViewModel.FileContentsChanged;
+                App.occupiedInstance.ViewModel._fileQueryResult.ContentsChanged -= App.occupiedInstance.ViewModel.FileContentsChanged;
             }
         }
 
@@ -134,18 +112,17 @@ namespace Files
 
         public void RightClickContextMenu_Opening(object sender, object e)
         {
-            var selectedFileSystemItems = (App.OccupiedInstance.ItemDisplayFrame.Content as BaseLayout).selectedItems;
 
             // Find selected items that are not folders
-            if (selectedFileSystemItems.Cast<ListedItem>().Any(x => x.FileType != "Folder"))
+            if (App.occupiedInstance.SelectedStorageItems.Any(x => x.FileType != "Folder"))
             {
                 UnloadMenuFlyoutItemByName("SidebarPinItem");
                 UnloadMenuFlyoutItemByName("OpenInNewTab");
                 UnloadMenuFlyoutItemByName("OpenInNewWindowItem");
 
-                if (selectedFileSystemItems.Count == 1)
+                if (App.occupiedInstance.SelectedStorageItems.Count == 1)
                 {
-                    var selectedDataItem = selectedFileSystemItems[0] as ListedItem;
+                    var selectedDataItem = App.occupiedInstance.SelectedStorageItems[0] as ListedItem;
 
                     if (selectedDataItem.DotFileExtension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
                     {
@@ -158,7 +135,7 @@ namespace Files
                         UnloadMenuFlyoutItemByName("UnzipItem");
                     }
                 }
-                else if (selectedFileSystemItems.Count > 1)
+                else if (App.occupiedInstance.SelectedStorageItems.Count > 1)
                 {
                     UnloadMenuFlyoutItemByName("OpenItem");
                     UnloadMenuFlyoutItemByName("UnzipItem");
@@ -167,14 +144,14 @@ namespace Files
             else     // All are Folders
             {
                 UnloadMenuFlyoutItemByName("OpenItem");
-                if (selectedFileSystemItems.Count <= 5 && selectedFileSystemItems.Count > 0)
+                if (App.occupiedInstance.SelectedStorageItems.Count <= 5 && App.occupiedInstance.SelectedStorageItems.Count > 0)
                 {
                     this.FindName("SidebarPinItem");
                     this.FindName("OpenInNewTab");
                     this.FindName("OpenInNewWindowItem");
                     UnloadMenuFlyoutItemByName("UnzipItem");
                 }
-                else if (selectedFileSystemItems.Count > 5)
+                else if (App.occupiedInstance.SelectedStorageItems.Count > 5)
                 {
                     this.FindName("SidebarPinItem");
                     UnloadMenuFlyoutItemByName("OpenInNewTab");
@@ -182,27 +159,6 @@ namespace Files
                     UnloadMenuFlyoutItemByName("UnzipItem");
                 }
 
-            }
-        }
-
-
-        private void Page_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (AssociatedViewModel == null && AssociatedInteractions == null)
-            {
-                AssociatedViewModel = App.OccupiedInstance.instanceViewModel;
-                AssociatedInteractions = App.OccupiedInstance.instanceInteraction;
-                if (App.OccupiedInstance == null)
-                {
-                    App.OccupiedInstance = ItemViewModel.GetCurrentSelectedTabInstance<ProHome>();
-                }
-
-                if (App.OccupiedInstance.instanceViewModel == null && App.OccupiedInstance.instanceInteraction == null)
-                {
-                    App.OccupiedInstance.instanceViewModel = new ItemViewModel();
-                    App.OccupiedInstance.instanceInteraction = new Interaction();
-                    Page_Loaded(null, null);
-                }
             }
         }
     }

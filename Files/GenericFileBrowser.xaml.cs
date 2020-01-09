@@ -12,6 +12,7 @@ using Windows.System;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Core;
 using Windows.UI.Input;
+using System.Diagnostics;
 
 namespace Files
 {
@@ -170,7 +171,7 @@ namespace Files
 
         private void AllView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            AllView.CommitEdit();
+            AllView.CommitEdit(DataGridEditingUnit.Cell, true);
             if (e.AddedItems.Count > 0)
             {
                 App.OccupiedInstance.HomeItems.isEnabled = true;
@@ -202,7 +203,7 @@ namespace Files
             {
                 if (isRenamingItem)
                 {
-                    AllView.CommitEdit();
+                    AllView.CommitEdit(DataGridEditingUnit.Cell, true);
                 }
                 else
                 {

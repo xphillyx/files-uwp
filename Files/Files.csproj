@@ -243,6 +243,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Package.StoreAssociation.xml" />
+    <Content Include="Assets\OneDriveIconImage.svg" />
     <Content Include="Assets\QuickLook\quicklook_icon_black.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\WSL\alpine.svg" />

@@ -572,27 +572,44 @@
     <ScrollViewer VerticalScrollBarVisibility="Hidden">
         <Grid Padding="14,14,14,0" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
             <StackPanel Spacing="10" Orientation="Vertical">
-                <controls:AdaptiveGridView ScrollViewer.HorizontalScrollBarVisibility="Hidden" IsItemClickEnabled="True" x:Name="CardsList" ItemContainerStyle="{StaticResource AdaptiveGridViewItemContainerStyle2}" ItemsSource="{x:Bind list:ItemLoader.itemsAdded}" Padding="0,0,0,0" OneRowModeEnabled="True" ItemHeight="100" DesiredWidth="175" Grid.Row="1"  Grid.ColumnSpan="2" ItemClick="CardPressed">
-                    <controls:AdaptiveGridView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid Margin="0,0,0,0" Padding="0,0,0,0">
-                                <Grid Margin="2">
-                                    <controls:DropShadowPanel Style="{StaticResource DropShadowPanelStyle1}" PointerReleased="DropShadowPanel_PointerReleased" PointerPressed="DropShadowPanel_PointerPressed" PointerEntered="DropShadowPanel_PointerEntered" PointerExited="DropShadowPanel_PointerExited" OffsetX="0" OffsetY="2.50" ShadowOpacity="0.05" Padding="0,0,-4,0" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,0,5" VerticalAlignment="Stretch">
-                                        <Grid>
-                                            <Button BorderThickness="1" Style="{ThemeResource ButtonRevealStyle}" Windows10version1809:CornerRadius="4" Tag="{Binding Icon}" IsTapEnabled="True" Tapped="Button_Tapped" Background="{ThemeResource YourHomeCardBackgroundColor}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                                <StackPanel Spacing="10" Orientation="Vertical">
-                                                    <TextBlock Canvas.ZIndex="5" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" FontFamily="Segoe MDL2 Assets" FontSize="24" Text="{Binding Icon}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    <TextBlock Margin="0,0,0,0" Text="{Binding Text}" x:Name="ItemLocationName" FontFamily="Segoe UI" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                    </controls:DropShadowPanel>
+                <StackPanel Spacing="2" Orientation="Vertical">
+                    <TextBlock Margin="0,0,0,0" FontWeight="Medium" FontFamily="Segoe UI" FontSize="14" Text="Suggested" HorizontalAlignment="Left"/>
+                    <controls:AdaptiveGridView SelectionMode="None" StretchContentForSingleRow="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Hidden" IsItemClickEnabled="True" x:Name="CardsList" ItemsSource="{x:Bind list:ItemLoader.itemsAdded}" ItemHeight="84" Padding="0,0,0,0" Grid.Row="1" Grid.ColumnSpan="2" ItemClick="CardPressed">
+                        <controls:AdaptiveGridView.ItemTemplate>
+                            <DataTemplate x:DataType="list:LocationItem">
+                                <Grid ColumnSpacing="10" Margin="0,0,0,0" Padding="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition MaxWidth="200" Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Margin="14,0,0,0" Grid.Column="0">
+                                        <Image x:Name="FolderIconVector" x:Load="{x:Bind isFolderIconLoaded}" Width="64" HorizontalAlignment="Stretch" >
+                                            <Image.Source>
+                                                <SvgImageSource RasterizePixelWidth="128" RasterizePixelHeight="128" UriSource="/Assets/FolderIcon.svg"/>
+                                            </Image.Source>
+                                        </Image>
+                                        <Image x:Name="FileThumbnail" Source="{x:Bind FileThumbnail}" x:Load="{x:Bind isFileThumbnailLoaded}" Width="64" HorizontalAlignment="Stretch" />
+                                        <Image x:Name="OneDriveImage" x:Load="{x:Bind isOneDriveIconLoaded}" Width="64" Height="64" HorizontalAlignment="Stretch" >
+                                            <Image.Source>
+                                                <SvgImageSource RasterizePixelWidth="512" RasterizePixelHeight="328" UriSource="/Assets/OneDriveIconImage.svg"/>
+                                            </Image.Source>
+                                        </Image>
+                                        <FontIcon x:Name="SidebarPinGlyph" Glyph="&#xE840;" x:Load="{x:Bind isSidebarPinIconLoaded}" FontSize="52"/>
+                                        <FontIcon Foreground="Red" x:Name="SidebarPinGlyphFill" Glyph="&#xE842;" x:Load="{x:Bind isSidebarPinIconLoaded}" FontSize="52"/>
+                                    </Grid>
+                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" FontWeight="Medium" Margin="0,0,0,0" Text="{x:Bind Text}" x:Name="ItemLocationName" FontFamily="Segoe UI" FontSize="14" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="1" TextWrapping="WrapWholeWords" Margin="0,0,14,0" Text="{x:Bind Reason}" x:Name="LocationDescription" FontFamily="Segoe UI" FontSize="12" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                        </DataTemplate>
-                    </controls:AdaptiveGridView.ItemTemplate>
-                </controls:AdaptiveGridView>
-
+                            </DataTemplate>
+                        </controls:AdaptiveGridView.ItemTemplate>
+                    </controls:AdaptiveGridView>
+                </StackPanel>
                 <Grid x:Name="RecentsListGrid" Grid.Column="0">
                     <StackPanel Orientation="Vertical">
                         <TextBlock Margin="0,0,0,0" FontWeight="Medium" FontFamily="Segoe UI" FontSize="14" Text="Recent items" HorizontalAlignment="Left"/>

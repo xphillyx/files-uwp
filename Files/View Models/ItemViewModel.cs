@@ -265,12 +265,7 @@ namespace Files.Filesystem
         {
             _filesAndFolders = new ObservableCollection<ListedItem>();
             FilesAndFolders = new ReadOnlyObservableCollection<ListedItem>(_filesAndFolders);
-            //(App.CurrentInstance as ProHome).RibbonArea.RibbonViewModel.HomeItems.PropertyChanged += HomeItems_PropertyChanged;
-            //(App.CurrentInstance as ProHome).RibbonArea.RibbonViewModel.ShareItems.PropertyChanged += ShareItems_PropertyChanged;
-            //(App.CurrentInstance as ProHome).RibbonArea.RibbonViewModel.LayoutItems.PropertyChanged += LayoutItems_PropertyChanged;
-            //(App.CurrentInstance as ProHome).RibbonArea.RibbonViewModel.AlwaysPresentCommands.PropertyChanged += AlwaysPresentCommands_PropertyChanged;
             _cancellationTokenSource = new CancellationTokenSource();
-
 
             jumpTimer.Interval = TimeSpan.FromSeconds(0.8);
             jumpTimer.Tick += JumpTimer_Tick;

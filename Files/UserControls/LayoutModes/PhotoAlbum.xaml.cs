@@ -138,7 +138,7 @@ namespace Files
             if (newName == null)
                 return;
 
-            await App.CurrentInstance.InteractionOperations.RenameFileItem(selectedItem, currentName, newName);
+            await App.CurrentInstance.ContentPage.AssociatedOperations.RenameFileItem(selectedItem, currentName, newName);
         }
 
         private void EndRename(TextBox textBox)
@@ -158,13 +158,13 @@ namespace Files
             {
                 if (!isRenamingItem)
                 {
-                    App.CurrentInstance.InteractionOperations.List_ItemClick(null, null);
+                    App.CurrentInstance.ContentPage.AssociatedOperations.List_ItemClick(null, null);
                     e.Handled = true;
                 }
             }
             else if (e.Key == VirtualKey.Enter && e.KeyStatus.IsMenuKeyDown)
             {
-                AssociatedInteractions.ShowPropertiesButton_Click(null, null);
+                App.CurrentInstance.ContentPage.AssociatedOperations.ShowPropertiesButton_Click(null, null);
             }
         }
 

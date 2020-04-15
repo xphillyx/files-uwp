@@ -18,6 +18,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Navigation;
 
 namespace Files
 {
@@ -76,6 +77,12 @@ namespace Files
             }
 
             App.CurrentInstance.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            App.CurrentInstance.ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         }
 
         protected override void SetSelectedItemOnUi(ListedItem selectedItem)
@@ -138,7 +145,7 @@ namespace Files
             }
             else if (e.PropertyName == "IsLoadingItems")
             {
-                if (!AssociatedViewModel.IsLoadingItems && AssociatedViewModel.FilesAndFolders.Count > 0)
+                if (!App.CurrentInstance.ViewModel.IsLoadingItems && App.CurrentInstance.ViewModel.FilesAndFolders.Count > 0)
                 {
                     var allRows = new List<DataGridRow>();
 
@@ -179,7 +186,7 @@ namespace Files
             string currentName = previousFileName;
             string newName = (e.EditingElement as TextBox).Text;
 
-            bool successful = await App.CurrentInstance.InteractionOperations.RenameFileItem(selectedItem, currentName, newName);
+            bool successful = await base.AssociatedOperations.RenameFileItem(selectedItem, currentName, newName);
             if (!successful)
             {
                 selectedItem.ItemName = currentName;
@@ -211,7 +218,7 @@ namespace Files
             else if (e.Column != iconColumn)
                 SortedColumn = e.Column;
 
-            if (!AssociatedViewModel.IsLoadingItems && AssociatedViewModel.FilesAndFolders.Count > 0)
+            if (!App.CurrentInstance.ViewModel.IsLoadingItems && App.CurrentInstance.ViewModel.FilesAndFolders.Count > 0)
             {
                 var allRows = new List<DataGridRow>();
 
@@ -240,13 +247,13 @@ namespace Files
                 }
                 else
                 {
-                    App.CurrentInstance.InteractionOperations.List_ItemClick(null, null);
+                    base.AssociatedOperations.List_ItemClick(null, null);
                 }
                 e.Handled = true;
             }
             else if (e.Key == VirtualKey.Enter && e.KeyStatus.IsMenuKeyDown)
             {
-                AssociatedInteractions.ShowPropertiesButton_Click(null, null);
+                base.AssociatedOperations.ShowPropertiesButton_Click(null, null);
             }
         }
 

@@ -6,6 +6,13 @@ namespace Files.Controls
 {
     public class InteractionViewModel : ViewModelBase
     {
+        private bool _IsPasteEnabled;
+        public bool IsPasteEnabled
+        {
+            get => _IsPasteEnabled;
+            set => Set(ref _IsPasteEnabled, value);
+        }
+
         private Thickness _TabsLeftMargin = new Thickness(200, 0, 0, 0);
         public Thickness TabsLeftMargin
         {

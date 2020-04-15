@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using Windows.ApplicationModel.Core;
 using Windows.Storage;
+using Windows.System;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
@@ -454,6 +455,24 @@ namespace Files
         {
             AddNewTab(typeof(ModernShellPage), "New tab");
         }
+
+        public void CloseTab()
+        {
+            if (TabStrip.TabItems.Count == 1)
+            {
+                Application.Current.Exit();
+            }
+            else if (TabStrip.TabItems.Count > 1)
+            {
+                TabStrip.TabItems.RemoveAt(TabStrip.SelectedIndex);
+            }
+        }
+
+        public async void LaunchNewWindow()
+        {
+            var filesUWPUri = new Uri("files-uwp:");
+            await Launcher.LaunchUriAsync(filesUWPUri);
+        }
     }
 
     public class TabWindowProperties : INotifyPropertyChanged
@@ -502,5 +521,6 @@ namespace Files
             }
         }
 
+        
     }
 }

@@ -51,7 +51,7 @@ namespace Files
                     selectedStorageItem = await StorageFile.GetFileFromPathAsync(selectedItem.ItemPath);
                     var hashAlgTypeName = HashAlgorithmNames.Md5;
 
-                    ItemProperties.ItemMD5Hash = await App.CurrentInstance.InteractionOperations.GetHashForFile(selectedItem, hashAlgTypeName); // get file hash
+                    ItemProperties.ItemMD5Hash = await App.CurrentInstance.ContentPage.AssociatedOperations.GetHashForFile(selectedItem, hashAlgTypeName); // get file hash
                 }
 
                 ItemProperties.ItemName = selectedItem.ItemName;

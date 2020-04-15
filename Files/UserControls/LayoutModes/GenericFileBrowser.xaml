@@ -12,7 +12,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     Background="{StaticResource ApplicationPageBackgroundThemeBrush}"
-    NavigationCacheMode="Required"
+    NavigationCacheMode="Disabled"
     PointerReleased="GenericItemView_PointerReleased"
     mc:Ignorable="d">
 

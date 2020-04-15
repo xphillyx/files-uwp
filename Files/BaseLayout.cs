@@ -24,10 +24,11 @@ namespace Files
     /// </summary>
     public abstract class BaseLayout : Page, INotifyPropertyChanged
     {
+        public Interaction AssociatedOperations { get; internal set; }
+        public ItemViewModel ViewModel { get; internal set; }
+
         public bool IsQuickLookEnabled { get; set; } = false;
 
-        public ItemViewModel AssociatedViewModel = null;
-        public Interaction AssociatedInteractions = null;
         public bool isRenamingItem = false;
 
         private bool isItemSelected = false;
@@ -110,7 +111,6 @@ namespace Files
         public BaseLayout()
         {
             this.Loaded += Page_Loaded;
-            Page_Loaded(null, null);
 
             // QuickLook Integration
             ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
@@ -132,16 +132,16 @@ namespace Files
         {
             if (App.CurrentInstance.ContentPage != null)
             {
-                App.CurrentInstance.ViewModel.CancelLoadAndClearFiles();
-                App.CurrentInstance.ViewModel.IsLoadingItems = true;
-                App.CurrentInstance.ViewModel.IsLoadingItems = false;
+                ViewModel.CancelLoadAndClearFiles();
+                ViewModel.IsLoadingItems = true;
+                ViewModel.IsLoadingItems = false;
                 if (App.AppSettings.LayoutMode == 0)
                 {
-                    App.CurrentInstance.ContentFrame.Navigate(typeof(GenericFileBrowser), App.CurrentInstance.ViewModel.WorkingDirectory, null);
+                    App.CurrentInstance.ContentFrame.Navigate(typeof(GenericFileBrowser), ViewModel.WorkingDirectory, null);
                 }
                 else
                 {
-                    App.CurrentInstance.ContentFrame.Navigate(typeof(PhotoAlbum), App.CurrentInstance.ViewModel.WorkingDirectory, null);
+                    App.CurrentInstance.ContentFrame.Navigate(typeof(PhotoAlbum), ViewModel.WorkingDirectory, null);
                 }
             }
 
@@ -168,10 +168,10 @@ namespace Files
             }
             App.CurrentInstance.NavigationToolbar.CanRefresh = true;
             IsItemSelected = false;
-            AssociatedViewModel.EmptyTextState.IsVisible = Visibility.Collapsed;
-            App.CurrentInstance.ViewModel.WorkingDirectory = parameters;
+            ViewModel.EmptyTextState.IsVisible = Visibility.Collapsed;
+            ViewModel.WorkingDirectory = parameters;
 
-            if (App.CurrentInstance.ViewModel.WorkingDirectory == Path.GetPathRoot(App.CurrentInstance.ViewModel.WorkingDirectory))
+            if (ViewModel.WorkingDirectory == Path.GetPathRoot(ViewModel.WorkingDirectory))
             {
                 App.CurrentInstance.NavigationToolbar.CanNavigateToParent = false;
             }
@@ -180,7 +180,7 @@ namespace Files
                 App.CurrentInstance.NavigationToolbar.CanNavigateToParent = true;
             }
 
-            await App.CurrentInstance.ViewModel.RefreshItems();
+            await ViewModel.RefreshItems();
 
             App.Clipboard_ContentChanged(null, null);
             App.CurrentInstance.NavigationToolbar.PathControlDisplayText = parameters;
@@ -191,9 +191,9 @@ namespace Files
             base.OnNavigatingFrom(e);
             // Remove item jumping handler
             Window.Current.CoreWindow.CharacterReceived -= Page_CharacterReceived;
-            if (App.CurrentInstance.ViewModel._fileQueryResult != null)
+            if (ViewModel._fileQueryResult != null)
             {
-                App.CurrentInstance.ViewModel._fileQueryResult.ContentsChanged -= App.CurrentInstance.ViewModel.FileContentsChanged;
+                ViewModel._fileQueryResult.ContentsChanged -= ViewModel.FileContentsChanged;
             }
             App.AppSettings.LayoutModeChangeRequested -= AppSettings_LayoutModeChangeRequested;
         }
@@ -262,15 +262,13 @@ namespace Files
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            if (AssociatedViewModel == null && AssociatedInteractions == null)
+            if (App.CurrentInstance == null)
             {
-                AssociatedViewModel = App.CurrentInstance.ViewModel;
-                AssociatedInteractions = App.CurrentInstance.InteractionOperations;
-                if (App.CurrentInstance == null)
-                {
-                    App.CurrentInstance = ItemViewModel.GetCurrentSelectedTabInstance<ModernShellPage>();
-                }
+                App.CurrentInstance = ItemViewModel.GetCurrentSelectedTabInstance<ModernShellPage>();
             }
+            AssociatedOperations = new Interaction();
+            ViewModel = new ItemViewModel();
+            this.Loaded -= Page_Loaded;
         }
 
         protected virtual void Page_CharacterReceived(CoreWindow sender, CharacterReceivedEventArgs args)
@@ -280,7 +278,7 @@ namespace Files
                 return;
 
             char letterPressed = Convert.ToChar(args.KeyCode);
-            App.CurrentInstance.InteractionOperations.PushJumpChar(letterPressed);
+            AssociatedOperations.PushJumpChar(letterPressed);
         }
 
         protected async void List_DragOver(object sender, DragEventArgs e)
@@ -289,7 +287,7 @@ namespace Files
             {
                 IReadOnlyList<IStorageItem> draggedItems = await e.DataView.GetStorageItemsAsync();
                 // As long as one file doesn't already belong to this folder
-                if (draggedItems.Any(draggedItem => !Directory.GetParent(draggedItem.Path).FullName.Equals(App.CurrentInstance.ViewModel.WorkingDirectory, StringComparison.OrdinalIgnoreCase)))
+                if (draggedItems.Any(draggedItem => !Directory.GetParent(draggedItem.Path).FullName.Equals(ViewModel.WorkingDirectory, StringComparison.OrdinalIgnoreCase)))
                 {
                     e.AcceptedOperation = DataPackageOperation.Copy;
                     e.Handled = true;
@@ -305,7 +303,7 @@ namespace Files
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
-                await AssociatedInteractions.PasteItems(e.DataView, App.CurrentInstance.ViewModel.WorkingDirectory, e.AcceptedOperation);
+                await AssociatedOperations.PasteItems(e.DataView, ViewModel.WorkingDirectory, e.AcceptedOperation);
                 e.Handled = true;
             }
         }
@@ -348,7 +346,7 @@ namespace Files
         {
             e.Handled = true;
             ListedItem rowItem = GetItemFromElement(sender);
-            await App.CurrentInstance.InteractionOperations.PasteItems(e.DataView, rowItem.ItemPath, e.AcceptedOperation);
+            await AssociatedOperations.PasteItems(e.DataView, rowItem.ItemPath, e.AcceptedOperation);
         }
 
         protected void InitializeDrag(UIElement element)

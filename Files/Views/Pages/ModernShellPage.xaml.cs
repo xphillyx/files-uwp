@@ -16,13 +16,8 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 
 
-// The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
-
 namespace Files.Views.Pages
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class ModernShellPage : Page, IShellPage
     {
         public ModernShellPage()
@@ -41,19 +36,11 @@ namespace Files.Views.Pages
         }
 
         Type IShellPage.CurrentPageType => ItemDisplayFrame.SourcePageType;
-
         INavigationToolbar IShellPage.NavigationToolbar => NavToolbar;
-
         INavigationControlItem IShellPage.SidebarSelectedItem { get => SidebarControl.SelectedSidebarItem; set => SidebarControl.SelectedSidebarItem = value; }
-
         Frame IShellPage.ContentFrame => ItemDisplayFrame;
-
-        Interaction IShellPage.InteractionOperations => interactionOperation;
-
-        ItemViewModel IShellPage.ViewModel => viewModel;
-
         BaseLayout IShellPage.ContentPage => GetContentOrNull();
-        Control IShellPage.OperationsControl => null;
+        object IShellPage.OperationsControl => null;
 
         private BaseLayout GetContentOrNull()
         {
@@ -86,7 +73,7 @@ namespace Files.Views.Pages
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             viewModel = new ItemViewModel();
-            interactionOperation = new Interaction();
+            interactionOperation = App.CurrentInstance.ContentPage.AssociatedOperations;
 
             switch (NavParams)
             {
@@ -215,43 +202,43 @@ namespace Files.Views.Pages
                 case (false, true, false, true, VirtualKey.Delete): //shift + delete, PermanentDelete
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
                         App.InteractionViewModel.PermanentlyDelete = true;
-                    App.CurrentInstance.InteractionOperations.DeleteItem_Click(null, null);
+                    App.CurrentInstance.ContentPage.AssociatedOperations.DeleteItem_Click(null, null);
                     break;
                 case (true, false, false, true, VirtualKey.C): //ctrl + c, copy
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.InteractionOperations.CopyItem_ClickAsync(null, null);
+                        App.CurrentInstance.ContentPage.AssociatedOperations.CopyItem_ClickAsync(null, null);
                     break;
                 case (true, false, false, true, VirtualKey.V): //ctrl + v, paste
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.InteractionOperations.PasteItem_ClickAsync(null, null);
+                        App.CurrentInstance.ContentPage.AssociatedOperations.PasteItem_ClickAsync(null, null);
                     break;
                 case (true, false, false, true, VirtualKey.X): //ctrl + x, cut
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.InteractionOperations.CutItem_Click(null, null);
+                        App.CurrentInstance.ContentPage.AssociatedOperations.CutItem_Click(null, null);
                     break;
                 case (true, false, false, true, VirtualKey.A): //ctrl + a, select all
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.InteractionOperations.SelectAllItems();
+                        App.CurrentInstance.ContentPage.AssociatedOperations.SelectAllItems();
                     break;
                 case (true, false, false, true, VirtualKey.N): //ctrl + n, new window
-                    App.CurrentInstance.InteractionOperations.LaunchNewWindow();
+                    App.CurrentInstance.ContentPage.AssociatedOperations.LaunchNewWindow();
                     break;
                 case (true, false, false, true, VirtualKey.W): //ctrl + w, close tab
-                    App.CurrentInstance.InteractionOperations.CloseTab();
+                    App.CurrentInstance.ContentPage.AssociatedOperations.CloseTab();
                     break;
                 case (true, false, false, true, VirtualKey.F4): //ctrl + F4, close tab
-                    App.CurrentInstance.InteractionOperations.CloseTab();
+                    App.CurrentInstance.ContentPage.AssociatedOperations.CloseTab();
                     break;
                 case (false, false, false, true, VirtualKey.Delete): //delete, delete item
                     if (App.CurrentInstance.ContentPage.IsItemSelected && !App.CurrentInstance.ContentPage.isRenamingItem)
-                        App.CurrentInstance.InteractionOperations.DeleteItem_Click(null, null);
+                        App.CurrentInstance.ContentPage.AssociatedOperations.DeleteItem_Click(null, null);
                     break;
                 case (false, false, false, true, VirtualKey.Space): //space, quick look
                     if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
                     {
                         if ((App.CurrentInstance.ContentPage).IsQuickLookEnabled)
                         {
-                            App.CurrentInstance.InteractionOperations.ToggleQuickLook();
+                            App.CurrentInstance.ContentPage.AssociatedOperations.ToggleQuickLook();
                         }
                     }
                     break;
@@ -289,7 +276,7 @@ namespace Files.Views.Pages
                     case VirtualKey.F2: //F2, rename
                         if ((App.CurrentInstance.ContentPage).SelectedItems.Count > 0)
                         {
-                            App.CurrentInstance.InteractionOperations.RenameItem_Click(null, null);
+                            App.CurrentInstance.ContentPage.AssociatedOperations.RenameItem_Click(null, null);
                         }
                         break;
                 }

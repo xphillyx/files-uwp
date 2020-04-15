@@ -13,6 +13,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using static Files.Interacts.InteractionOperationsBase;
 
 // The Content Dialog item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -21,12 +22,6 @@ namespace Files.Dialogs
     public sealed partial class ConfirmDeleteDialog : ContentDialog
     {
         public MyResult Result { get; set; }
-        public enum MyResult
-        {
-            Delete,
-            Cancel,
-            Nothing
-        }
 
         public ConfirmDeleteDialog()
         {

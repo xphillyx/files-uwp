@@ -1,6 +1,5 @@
 ﻿using Files.Filesystem;
 using Files.Interacts;
-using Files.View_Models;
 using Files.Views.Pages;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -22,15 +22,12 @@ namespace Files
     /// <summary>
     /// The base class which every layout page must derive from
     /// </summary>
-    public abstract class BaseLayout : Page, INotifyPropertyChanged
+    public abstract partial class BaseLayout : Page, INotifyPropertyChanged
     {
         public Interaction AssociatedOperations { get; internal set; }
         public ItemViewModel ViewModel { get; internal set; }
-
         public bool IsQuickLookEnabled { get; set; } = false;
-
         public bool isRenamingItem = false;
-
         private bool isItemSelected = false;
         public bool IsItemSelected
         {
@@ -47,13 +44,12 @@ namespace Files
                 }
             }
         }
-
         private List<ListedItem> _SelectedItems;
         public List<ListedItem> SelectedItems
         {
             get
             {
-                if(_SelectedItems == null)
+                if (_SelectedItems == null)
                 {
                     return new List<ListedItem>();
                 }
@@ -80,7 +76,6 @@ namespace Files
                 }
             }
         }
-
         private ListedItem _SelectedItem;
         public ListedItem SelectedItem
         {
@@ -106,12 +101,12 @@ namespace Files
                 }
             }
         }
-
+        readonly InstanceTabsView instanceTabsView;
 
         public BaseLayout()
         {
             this.Loaded += Page_Loaded;
-
+            instanceTabsView = (Window.Current.Content as Frame).Content as InstanceTabsView;
             // QuickLook Integration
             ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
             var isQuickLookIntegrationEnabled = localSettings.Values["quicklook_enabled"];
@@ -130,7 +125,7 @@ namespace Files
 
         private void AppSettings_LayoutModeChangeRequested(object sender, EventArgs e)
         {
-            if (App.CurrentInstance.ContentPage != null)
+            if (App.CurrentInstance.CurrentPageType != typeof(YourHome))
             {
                 ViewModel.CancelLoadAndClearFiles();
                 ViewModel.IsLoadingItems = true;
@@ -205,7 +200,7 @@ namespace Files
 
         public void RightClickContextMenu_Opening(object sender, object e)
         {
-            var selectedFileSystemItems = (App.CurrentInstance.ContentPage as BaseLayout).SelectedItems;
+            var selectedFileSystemItems = SelectedItems;
 
             // Find selected items that are not folders
             if (selectedFileSystemItems.Cast<ListedItem>().Any(x => x.PrimaryItemAttribute != StorageItemTypes.Folder))
@@ -271,6 +266,80 @@ namespace Files
             this.Loaded -= Page_Loaded;
         }
 
+        private async void BaseLayout_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
+            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
+            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
+            var tabInstance = App.CurrentInstance != null;
+
+            switch (c: ctrl, s: shift, a: alt, t: tabInstance, k: e.Key)
+            {
+                case (true, true, false, true, VirtualKey.N): //ctrl + shift + n, new item
+                    //     await App.AddItemDialogDisplay.ShowAsync();
+                    break;
+                case (false, true, false, true, VirtualKey.Delete): //shift + delete, PermanentDelete
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                    {
+                        App.InteractionViewModel.PermanentlyDelete = true;
+                        DeleteItems();
+                    }
+                    break;
+                case (true, false, false, true, VirtualKey.C): //ctrl + c, copy
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                        CopyItem();
+                    break;
+                case (true, false, false, true, VirtualKey.V): //ctrl + v, paste
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                        await PasteItems();
+                    break;
+                case (true, false, false, true, VirtualKey.X): //ctrl + x, cut
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                        CutItem();
+                    break;
+                case (true, false, false, true, VirtualKey.A): //ctrl + a, select all
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                        (App.CurrentInstance.ContentFrame.Content as IChildLayout).SelectAllItems();
+                    break;
+                case (true, false, false, true, VirtualKey.N): //ctrl + n, new window
+                    instanceTabsView.LaunchNewWindow();
+                    break;
+                case (true, false, false, true, VirtualKey.W): //ctrl + w, close tab
+                    instanceTabsView.CloseTab();
+                    break;
+                case (true, false, false, true, VirtualKey.F4): //ctrl + F4, close tab
+                    instanceTabsView.CloseTab();
+                    break;
+                case (false, false, false, true, VirtualKey.Delete): //delete, delete item
+                    if (IsItemSelected && !isRenamingItem)
+                        DeleteItems();
+                    break;
+                case (false, false, false, true, VirtualKey.Space): //space, quick look
+                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
+                    {
+                        if (IsQuickLookEnabled)
+                        {
+                            ToggleQuickLook();
+                        }
+                    }
+                    break;
+            };
+
+
+            if (App.CurrentInstance.CurrentPageType == typeof(PhotoAlbum))
+            {
+                switch (e.Key)
+                {
+                    case VirtualKey.F2: //F2, rename
+                        if (SelectedItems.Count > 0)
+                        {
+                            (App.CurrentInstance.ContentFrame.Content as IChildLayout).BeginRename();
+                        }
+                        break;
+                }
+            }
+        }
+
         protected virtual void Page_CharacterReceived(CoreWindow sender, CharacterReceivedEventArgs args)
         {
             var focusedElement = FocusManager.GetFocusedElement(XamlRoot) as FrameworkElement;
@@ -278,7 +347,7 @@ namespace Files
                 return;
 
             char letterPressed = Convert.ToChar(args.KeyCode);
-            AssociatedOperations.PushJumpChar(letterPressed);
+            PushJumpChar(letterPressed);
         }
 
         protected async void List_DragOver(object sender, DragEventArgs e)
@@ -303,7 +372,7 @@ namespace Files
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
-                await AssociatedOperations.PasteItems(e.DataView, ViewModel.WorkingDirectory, e.AcceptedOperation);
+                await PasteItems(e.DataView);
                 e.Handled = true;
             }
         }
@@ -311,7 +380,7 @@ namespace Files
         protected async void Item_DragStarting(object sender, DragStartingEventArgs e)
         {
             List<IStorageItem> selectedStorageItems = new List<IStorageItem>();
-            foreach (ListedItem item in App.CurrentInstance.ContentPage.SelectedItems)
+            foreach (ListedItem item in SelectedItems)
             {
                 if (item.PrimaryItemAttribute == StorageItemTypes.File)
                     selectedStorageItems.Add(await StorageFile.GetFileFromPathAsync(item.ItemPath));
@@ -346,13 +415,13 @@ namespace Files
         {
             e.Handled = true;
             ListedItem rowItem = GetItemFromElement(sender);
-            await AssociatedOperations.PasteItems(e.DataView, rowItem.ItemPath, e.AcceptedOperation);
+            await PasteItems(e.DataView);
         }
 
         protected void InitializeDrag(UIElement element)
         {
             ListedItem item = GetItemFromElement(element);
-            if(item != null)
+            if (item != null)
             {
                 element.AllowDrop = false;
                 element.DragStarting -= Item_DragStarting;
@@ -367,6 +436,5 @@ namespace Files
                 }
             }
         }
-
     }
 }

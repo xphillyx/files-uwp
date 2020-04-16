@@ -1,10 +1,13 @@
 using Files.Enums;
 using Files.Filesystem;
+using Files.Helpers;
+using Files.Interacts;
 using Files.Views.Pages;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.Toolkit.Uwp.UI.Controls;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -22,7 +25,7 @@ using Windows.UI.Xaml.Navigation;
 
 namespace Files
 {
-    public sealed partial class GenericFileBrowser : BaseLayout
+    public sealed partial class GenericFileBrowser : BaseLayout, IChildLayout
     {
         public string previousFileName;
         private DataGridColumn _sortedColumn;
@@ -35,15 +38,15 @@ namespace Files
             set
             {
                 if (value == nameColumn)
-                    App.CurrentInstance.ViewModel.DirectorySortOption = SortOption.Name;
+                    base.ViewModel.DirectorySortOption = SortOption.Name;
                 else if (value == dateColumn)
-                    App.CurrentInstance.ViewModel.DirectorySortOption = SortOption.DateModified;
+                    base.ViewModel.DirectorySortOption = SortOption.DateModified;
                 else if (value == typeColumn)
-                    App.CurrentInstance.ViewModel.DirectorySortOption = SortOption.FileType;
+                    base.ViewModel.DirectorySortOption = SortOption.FileType;
                 else if (value == sizeColumn)
-                    App.CurrentInstance.ViewModel.DirectorySortOption = SortOption.Size;
+                    base.ViewModel.DirectorySortOption = SortOption.Size;
                 else
-                    App.CurrentInstance.ViewModel.DirectorySortOption = SortOption.Name;
+                    base.ViewModel.DirectorySortOption = SortOption.Name;
 
                 if (value != _sortedColumn)
                 {
@@ -51,7 +54,7 @@ namespace Files
                     if (_sortedColumn != null)
                         _sortedColumn.SortDirection = null;
                 }
-                value.SortDirection = App.CurrentInstance.ViewModel.DirectorySortDirection == SortDirection.Ascending ? DataGridSortDirection.Ascending : DataGridSortDirection.Descending;
+                value.SortDirection = base.ViewModel.DirectorySortDirection == SortDirection.Ascending ? DataGridSortDirection.Ascending : DataGridSortDirection.Descending;
                 _sortedColumn = value;
             }
         }
@@ -60,7 +63,7 @@ namespace Files
         {
             this.InitializeComponent();
 
-            switch (App.CurrentInstance.ViewModel.DirectorySortOption)
+            switch (base.ViewModel.DirectorySortOption)
             {
                 case SortOption.Name:
                     SortedColumn = nameColumn;
@@ -76,13 +79,13 @@ namespace Files
                     break;
             }
 
-            App.CurrentInstance.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            base.ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
-            App.CurrentInstance.ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            base.ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         }
 
         protected override void SetSelectedItemOnUi(ListedItem selectedItem)
@@ -102,7 +105,7 @@ namespace Files
             if (selectedItems.Count > 0)
             {
                 var rows = new List<DataGridRow>();
-                Interacts.Interaction.FindChildren<DataGridRow>(rows, AllView);
+                FindHelpers.FindChildren<DataGridRow>(rows, AllView);
                 foreach (DataGridRow row in rows)
                     row.CanDrag = selectedItems.Contains(row.DataContext);
             }
@@ -122,7 +125,7 @@ namespace Files
         {
             if (e.PropertyName == "DirectorySortOption")
             {
-                switch (App.CurrentInstance.ViewModel.DirectorySortOption)
+                switch (base.ViewModel.DirectorySortOption)
                 {
                     case SortOption.Name:
                         SortedColumn = nameColumn;
@@ -145,18 +148,18 @@ namespace Files
             }
             else if (e.PropertyName == "IsLoadingItems")
             {
-                if (!App.CurrentInstance.ViewModel.IsLoadingItems && App.CurrentInstance.ViewModel.FilesAndFolders.Count > 0)
+                if (!base.ViewModel.IsLoadingItems && base.ViewModel.FilesAndFolders.Count > 0)
                 {
                     var allRows = new List<DataGridRow>();
 
-                    Interacts.Interaction.FindChildren<DataGridRow>(allRows, AllView);
+                    FindHelpers.FindChildren<DataGridRow>(allRows, AllView);
                     foreach (DataGridRow row in allRows.Take(30))
                     {
                         if (!(row.DataContext as ListedItem).ItemPropertiesInitialized)
                         {
                             await Window.Current.CoreWindow.Dispatcher.RunIdleAsync((e) =>
                             {
-                                App.CurrentInstance.ViewModel.LoadExtendedItemProperties(row.DataContext as ListedItem);
+                                base.ViewModel.LoadExtendedItemProperties(row.DataContext as ListedItem);
                                 (row.DataContext as ListedItem).ItemPropertiesInitialized = true;
                             });
                         }
@@ -186,7 +189,7 @@ namespace Files
             string currentName = previousFileName;
             string newName = (e.EditingElement as TextBox).Text;
 
-            bool successful = await base.AssociatedOperations.RenameFileItem(selectedItem, currentName, newName);
+            bool successful = await base.RenameItem(selectedItem, currentName, newName);
             if (!successful)
             {
                 selectedItem.ItemName = currentName;
@@ -214,22 +217,22 @@ namespace Files
         private async void AllView_Sorting(object sender, DataGridColumnEventArgs e)
         {
             if (e.Column == SortedColumn)
-                App.CurrentInstance.ViewModel.IsSortedAscending = !App.CurrentInstance.ViewModel.IsSortedAscending;
+                base.ViewModel.IsSortedAscending = !base.ViewModel.IsSortedAscending;
             else if (e.Column != iconColumn)
                 SortedColumn = e.Column;
 
-            if (!App.CurrentInstance.ViewModel.IsLoadingItems && App.CurrentInstance.ViewModel.FilesAndFolders.Count > 0)
+            if (!base.ViewModel.IsLoadingItems && base.ViewModel.FilesAndFolders.Count > 0)
             {
                 var allRows = new List<DataGridRow>();
 
-                Interacts.Interaction.FindChildren<DataGridRow>(allRows, AllView);
+                FindHelpers.FindChildren<DataGridRow>(allRows, AllView);
                 foreach (DataGridRow row in allRows.Take(30))
                 {
                     if (!(row.DataContext as ListedItem).ItemPropertiesInitialized)
                     {
                         await Window.Current.CoreWindow.Dispatcher.RunIdleAsync((e) =>
                         {
-                            App.CurrentInstance.ViewModel.LoadExtendedItemProperties(row.DataContext as ListedItem);
+                            base.ViewModel.LoadExtendedItemProperties(row.DataContext as ListedItem);
                             (row.DataContext as ListedItem).ItemPropertiesInitialized = true;
                         });
                     }
@@ -247,13 +250,13 @@ namespace Files
                 }
                 else
                 {
-                    base.AssociatedOperations.List_ItemClick(null, null);
+                    base.OpenItems(false);
                 }
                 e.Handled = true;
             }
             else if (e.Key == VirtualKey.Enter && e.KeyStatus.IsMenuKeyDown)
             {
-                base.AssociatedOperations.ShowPropertiesButton_Click(null, null);
+                base.DisplayItemProperties();
             }
         }
 
@@ -271,12 +274,12 @@ namespace Files
 
         private async void Icon_EffectiveViewportChanged(FrameworkElement sender, EffectiveViewportChangedEventArgs args)
         {
-            var parentRow = Interacts.Interaction.FindParent<DataGridRow>(sender);
+            var parentRow = FindHelpers.FindParent<DataGridRow>(sender);
             if ((!(parentRow.DataContext as ListedItem).ItemPropertiesInitialized) && (args.BringIntoViewDistanceX < sender.ActualHeight))
             {
                 await Window.Current.CoreWindow.Dispatcher.RunIdleAsync((e) =>
                 {
-                    App.CurrentInstance.ViewModel.LoadExtendedItemProperties(parentRow.DataContext as ListedItem);
+                    base.ViewModel.LoadExtendedItemProperties(parentRow.DataContext as ListedItem);
                     (parentRow.DataContext as ListedItem).ItemPropertiesInitialized = true;
                     //sender.EffectiveViewportChanged -= Icon_EffectiveViewportChanged;
                 });
@@ -292,6 +295,65 @@ namespace Files
         {
             DataGridRow row = element as DataGridRow;
             return row.DataContext as ListedItem;
+        }
+
+        public void DataGrid_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            var dataGrid = (DataGrid)sender;
+            var RowPressed = FindHelpers.FindParent<DataGridRow>(e.OriginalSource as DependencyObject);
+            if (RowPressed != null)
+            {
+                var ObjectPressed = ((ReadOnlyObservableCollection<ListedItem>)dataGrid.ItemsSource)[RowPressed.GetIndex()];
+
+                // Check if RightTapped row is currently selected
+                if (!base.SelectedItems.Equals(null))
+                {
+                    if (base.SelectedItems.Contains(ObjectPressed))
+                        return;
+                }
+
+                // The following code is only reachable when a user RightTapped an unselected row
+                dataGrid.SelectedItems.Clear();
+                dataGrid.SelectedItems.Add(ObjectPressed);
+            }
+        }
+
+        public void BeginRename()
+        {
+            if (AllView.SelectedItem != null)
+                AllView.CurrentColumn = AllView.Columns[1];
+            AllView.BeginEdit();
+        }
+
+        public void DimItemForCut(ListedItem li)
+        {
+            AllView.Columns[0].GetCellContent(li).Opacity = 0.4;
+        }
+
+        public void ResetDimmedItems()
+        {
+            foreach (ListedItem listedItem in ViewModel.FilesAndFolders)
+            {
+                FrameworkElement element = AllView.Columns[0].GetCellContent(listedItem);
+                if (element != null)
+                    element.Opacity = 1;
+            }
+        }
+
+        public void SelectAllItems()
+        {
+            foreach (ListedItem li in AllView.ItemsSource)
+            {
+                if (!base.SelectedItems.Contains(li))
+                {
+                    AllView.SelectedItems.Add(li);
+                }
+            }
+        }
+
+        public void ClearAllItems()
+        {
+            AllView.SelectedItems.Clear();
         }
     }
 }

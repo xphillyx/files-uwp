@@ -1,4 +1,5 @@
 ﻿using Files.Filesystem;
+using Files.Helpers;
 using Files.Interacts;
 using Files.UserControls;
 using Files.View_Models;
@@ -39,7 +40,6 @@ namespace Files.Views.Pages
         INavigationToolbar IShellPage.NavigationToolbar => NavToolbar;
         INavigationControlItem IShellPage.SidebarSelectedItem { get => SidebarControl.SelectedSidebarItem; set => SidebarControl.SelectedSidebarItem = value; }
         Frame IShellPage.ContentFrame => ItemDisplayFrame;
-        BaseLayout IShellPage.ContentPage => GetContentOrNull();
         object IShellPage.OperationsControl => null;
 
         private BaseLayout GetContentOrNull()
@@ -67,14 +67,9 @@ namespace Files.Views.Pages
             NavParams = eventArgs.Parameter.ToString();
         }
 
-        private ItemViewModel viewModel = null;
-        private Interaction interactionOperation = null;
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            viewModel = new ItemViewModel();
-            interactionOperation = App.CurrentInstance.ContentPage.AssociatedOperations;
-
             switch (NavParams)
             {
                 case "Start":
@@ -152,7 +147,7 @@ namespace Files.Views.Pages
                     GridViewItem gridViewItem = (ItemDisplayFrame.Content as PhotoAlbum).FileList.ContainerFromItem(listedItem) as GridViewItem;
                     if (gridViewItem == null)
                         return;
-                    Interaction.FindChildren<Grid>(itemContentGrids, gridViewItem);
+                    FindHelpers.FindChildren<Grid>(itemContentGrids, gridViewItem);
                     var imageOfItem = itemContentGrids.Find(x => x.Tag?.ToString() == "ItemImage");
                     imageOfItem.Opacity = 1;
                 }
@@ -187,7 +182,7 @@ namespace Files.Views.Pages
             }
         }
 
-        private async void ModernShellPage_KeyUp(object sender, KeyRoutedEventArgs e)
+        private void ModernShellPage_KeyUp(object sender, KeyRoutedEventArgs e)
         {
             var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
@@ -196,52 +191,6 @@ namespace Files.Views.Pages
 
             switch (c: ctrl, s: shift, a: alt, t: tabInstance, k: e.Key)
             {
-                case (true, true, false, true, VirtualKey.N): //ctrl + shift + n, new item
-                    await App.AddItemDialogDisplay.ShowAsync();
-                    break;
-                case (false, true, false, true, VirtualKey.Delete): //shift + delete, PermanentDelete
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.InteractionViewModel.PermanentlyDelete = true;
-                    App.CurrentInstance.ContentPage.AssociatedOperations.DeleteItem_Click(null, null);
-                    break;
-                case (true, false, false, true, VirtualKey.C): //ctrl + c, copy
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.ContentPage.AssociatedOperations.CopyItem_ClickAsync(null, null);
-                    break;
-                case (true, false, false, true, VirtualKey.V): //ctrl + v, paste
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.ContentPage.AssociatedOperations.PasteItem_ClickAsync(null, null);
-                    break;
-                case (true, false, false, true, VirtualKey.X): //ctrl + x, cut
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.ContentPage.AssociatedOperations.CutItem_Click(null, null);
-                    break;
-                case (true, false, false, true, VirtualKey.A): //ctrl + a, select all
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                        App.CurrentInstance.ContentPage.AssociatedOperations.SelectAllItems();
-                    break;
-                case (true, false, false, true, VirtualKey.N): //ctrl + n, new window
-                    App.CurrentInstance.ContentPage.AssociatedOperations.LaunchNewWindow();
-                    break;
-                case (true, false, false, true, VirtualKey.W): //ctrl + w, close tab
-                    App.CurrentInstance.ContentPage.AssociatedOperations.CloseTab();
-                    break;
-                case (true, false, false, true, VirtualKey.F4): //ctrl + F4, close tab
-                    App.CurrentInstance.ContentPage.AssociatedOperations.CloseTab();
-                    break;
-                case (false, false, false, true, VirtualKey.Delete): //delete, delete item
-                    if (App.CurrentInstance.ContentPage.IsItemSelected && !App.CurrentInstance.ContentPage.isRenamingItem)
-                        App.CurrentInstance.ContentPage.AssociatedOperations.DeleteItem_Click(null, null);
-                    break;
-                case (false, false, false, true, VirtualKey.Space): //space, quick look
-                    if (!App.CurrentInstance.NavigationToolbar.IsEditModeEnabled)
-                    {
-                        if ((App.CurrentInstance.ContentPage).IsQuickLookEnabled)
-                        {
-                            App.CurrentInstance.ContentPage.AssociatedOperations.ToggleQuickLook();
-                        }
-                    }
-                    break;
                 case (false, false, true, true, VirtualKey.Left): //alt + back arrow, backward
                     NavigationActions.Back_Click(null, null);
                     break;
@@ -267,20 +216,6 @@ namespace Files.Views.Pages
                     //    (App.CurrentInstance.OperationsControl as RibbonArea).RibbonTabView.SelectedIndex = 3;
                     //    break;
             };
-
-
-            if (App.CurrentInstance.CurrentPageType == typeof(PhotoAlbum))
-            {
-                switch (e.Key)
-                {
-                    case VirtualKey.F2: //F2, rename
-                        if ((App.CurrentInstance.ContentPage).SelectedItems.Count > 0)
-                        {
-                            App.CurrentInstance.ContentPage.AssociatedOperations.RenameItem_Click(null, null);
-                        }
-                        break;
-                }
-            }
         }
     }
 

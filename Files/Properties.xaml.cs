@@ -36,7 +36,7 @@ namespace Files
         private async void Properties_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
             // Collect AppWindow-specific info
-            propWindow = Interaction.AppWindows[this.UIContext];
+            propWindow = BaseLayout.AppWindows[this.UIContext];
             if (App.CurrentInstance.ContentPage.IsItemSelected)
             {
                 var selectedItem = App.CurrentInstance.ContentPage.SelectedItem;

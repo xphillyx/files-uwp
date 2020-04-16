@@ -149,8 +149,10 @@
     <Compile Include="Dialogs\ConfirmDeleteDialog.xaml.cs">
       <DependentUpon>ConfirmDeleteDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\FindHelpers.cs" />
     <Compile Include="Helpers\ItemsDataTemplateSelector.cs" />
     <Compile Include="Helpers\NaturalStringComparer.cs" />
+    <Compile Include="Interacts\InteractionOperations.cs" />
     <Compile Include="ResourceController.cs" />
     <Compile Include="UserControls\NavigationToolbar\INavigationToolbar.cs" />
     <Compile Include="UserControls\NavigationToolbar\ModernNavigationToolbar.xaml.cs">
@@ -206,7 +208,7 @@
     </Compile>
     <Compile Include="Interacts\EmptyFolderTextState.cs" />
     <Compile Include="Interacts\Interaction.cs" />
-    <Compile Include="Interacts\ItemInteractions.cs" />
+    <Compile Include="Interacts\IChildLayout.cs" />
     <Compile Include="IShellPage.cs" />
     <Compile Include="LocationsList.cs" />
     <Compile Include="Navigation\NavigationActions.cs" />

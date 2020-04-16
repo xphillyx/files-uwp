@@ -1,4 +1,6 @@
 ﻿using Files.Filesystem;
+using Files.Helpers;
+using Files.Interacts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +10,11 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Interaction = Files.Interacts.Interaction;
 
 namespace Files
 {
 
-    public sealed partial class PhotoAlbum : BaseLayout
+    public sealed partial class PhotoAlbum : BaseLayout, IChildLayout
     {
 
         public PhotoAlbum()
@@ -42,7 +43,7 @@ namespace Files
                     GridViewItem gridViewItem = FileList.ContainerFromItem(listedItem) as GridViewItem;
                     
                     List<Grid> grids = new List<Grid>();
-                    Interaction.FindChildren<Grid>(grids, gridViewItem);
+                    FindHelpers.FindChildren<Grid>(grids, gridViewItem);
                     var imageOfItem = grids.Find(x => x.Tag?.ToString() == "ItemRoot");
                     imageOfItem.CanDrag = selectedItems.Contains(listedItem);
                 }
@@ -61,7 +62,7 @@ namespace Files
 
         private void StackPanel_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {
-            var parentContainer = Interaction.FindParent<GridViewItem>(e.OriginalSource as DependencyObject);
+            var parentContainer = FindHelpers.FindParent<GridViewItem>(e.OriginalSource as DependencyObject);
             if (FileList.SelectedItems.Contains(FileList.ItemFromContainer(parentContainer)))
             {
                 return;
@@ -138,7 +139,7 @@ namespace Files
             if (newName == null)
                 return;
 
-            await App.CurrentInstance.ContentPage.AssociatedOperations.RenameFileItem(selectedItem, currentName, newName);
+            await RenameItem(selectedItem, currentName, newName);
         }
 
         private void EndRename(TextBox textBox)
@@ -158,13 +159,13 @@ namespace Files
             {
                 if (!isRenamingItem)
                 {
-                    App.CurrentInstance.ContentPage.AssociatedOperations.List_ItemClick(null, null);
+                    OpenItems(false);
                     e.Handled = true;
                 }
             }
             else if (e.Key == VirtualKey.Enter && e.KeyStatus.IsMenuKeyDown)
             {
-                App.CurrentInstance.ContentPage.AssociatedOperations.ShowPropertiesButton_Click(null, null);
+                DisplayItemProperties();
             }
         }
 
@@ -186,7 +187,7 @@ namespace Files
             {
                 await Window.Current.CoreWindow.Dispatcher.RunIdleAsync((e) =>
                 {
-                    App.CurrentInstance.ViewModel.LoadExtendedItemProperties(sender.DataContext as ListedItem, 80);
+                    ViewModel.LoadExtendedItemProperties(sender.DataContext as ListedItem, 80);
                     (sender.DataContext as ListedItem).ItemPropertiesInitialized = true;
                 });
             }
@@ -202,5 +203,33 @@ namespace Files
         {
             InitializeDrag(sender as UIElement);
         }
+
+        public void BeginRename() => StartRename();
+
+        public void DimItemForCut(ListedItem li)
+        {
+            GridViewItem itemToDimForCut = (GridViewItem)FileList.ContainerFromItem(li);
+            List<Grid> itemContentGrids = new List<Grid>();
+            Helpers.FindHelpers.FindChildren<Grid>(itemContentGrids, itemToDimForCut);
+            var imageOfItem = itemContentGrids.Find(x => x.Tag?.ToString() == "ItemImage");
+            imageOfItem.Opacity = 0.4;
+        }
+
+        public void ResetDimmedItems()
+        {
+            foreach (ListedItem listedItem in ViewModel.FilesAndFolders)
+            {
+                List<Grid> itemContentGrids = new List<Grid>();
+                if (!(FileList.ContainerFromItem(listedItem) is GridViewItem gridViewItem))
+                    continue;
+                FindHelpers.FindChildren<Grid>(itemContentGrids, gridViewItem);
+                var imageOfItem = itemContentGrids.Find(x => x.Tag?.ToString() == "ItemImage");
+                imageOfItem.Opacity = 1;
+            }
+        }
+
+        public void SelectAllItems() => FileList.SelectAll();
+
+        public void ClearAllItems() => FileList.SelectedItems.Clear();
     }
 }
